@@ -35,6 +35,10 @@ class AppCoordinator: NSObject, Coordinator {
         let factory = DefaultModuleFactory()
         let coordinator = ModuleCoordinator(navigationController: navigationController, moduleFactory: factory)
         coordinator.delegates.add(self)
+        coordinator.delegates.add(AnalyticsTracker.shared)
+        coordinator.delegates.add(PerformanceMonitor.shared)
+        coordinator.delegates.add(NavigationHistory.shared)
+        coordinator.interceptors.add(AuthInterceptor.shared)
         tabCoordinators = [coordinator]
         addChild(coordinator)
         coordinator.navigateTo(.home, animated: false)
