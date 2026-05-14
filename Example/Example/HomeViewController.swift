@@ -88,6 +88,11 @@ class HomeViewController: BaseModuleViewController {
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             self?.present(alert, animated: true)
         }
+
+        // MARK: - 退出登录
+        addButton(title: "退出登录", color: .systemRed) { [weak self] in
+            AppCoordinator.shared?.logout()
+        }
     }
 
     private func addButton(title: String, color: UIColor, action: @escaping () -> Void) {

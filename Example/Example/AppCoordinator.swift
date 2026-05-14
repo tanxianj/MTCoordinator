@@ -2,7 +2,9 @@
 //  AppCoordinator.swift
 //  Example
 //
-//  示例 AppCoordinator —— 演示如何使用 MTCoordinator 框架
+//  应用级协调器：
+//  - 未登录 → AuthCoordinator（登录页）
+//  - 登录后 → ModuleCoordinator（首页）
 //
 
 import UIKit
@@ -20,6 +22,7 @@ class AppCoordinator: NSObject, Coordinator {
     }
 
     private(set) var tabCoordinators: [ModuleCoordinator] = []
+    private var isLoggedIn = false
 
     init(navigationController: UINavigationController) {
         self.navigationController = navigationController
@@ -28,9 +31,35 @@ class AppCoordinator: NSObject, Coordinator {
     }
 
     func start() {
-        // 注册模块
+        // 注册所有模块
+        _ = Module.login
         _ = Module.home
         _ = Module.profile
+
+        if isLoggedIn {
+            showMainFlow()
+        } else {
+            showAuthFlow()
+        }
+    }
+
+    // MARK: - 登录流程
+
+    private func showAuthFlow() {
+        let auth = AuthCoordinator(navigationController: navigationController)
+        auth.delegate = self
+        addChild(auth)
+        auth.start()
+        print("👶 addChild(AuthCoordinator)")
+    }
+
+    // MARK: - 主页流程
+
+    private func showMainFlow() {
+        if let auth = findChild(ofType: AuthCoordinator.self) {
+            removeChild(auth)
+            print("🗑️ removeChild(AuthCoordinator)")
+        }
 
         let factory = DefaultModuleFactory()
         let coordinator = ModuleCoordinator(navigationController: navigationController, moduleFactory: factory)
@@ -42,6 +71,26 @@ class AppCoordinator: NSObject, Coordinator {
         tabCoordinators = [coordinator]
         addChild(coordinator)
         coordinator.navigateTo(.home, animated: false)
+        print("👶 addChild(ModuleCoordinator) | 进入主页")
+    }
+
+    // MARK: - 退出登录
+
+    func logout() {
+        isLoggedIn = false
+        tabCoordinators = []
+        removeAllChildren()
+        print("🗑️ removeAllChildren() | 退出登录")
+        showAuthFlow()
+    }
+}
+
+// MARK: - AuthCoordinatorDelegate
+
+extension AppCoordinator: AuthCoordinatorDelegate {
+    func authCoordinatorDidFinish(_ coordinator: AuthCoordinator) {
+        isLoggedIn = true
+        showMainFlow()
     }
 }
 
