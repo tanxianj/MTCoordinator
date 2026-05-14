@@ -1,13 +1,13 @@
 //
 //  UIButton+Closure.swift
-//  MTCoordinator
+//  Example
 //
 //  UIButton 闭包扩展 —— 兼容 iOS 12+
 //
 
 import UIKit
 
-public extension UIButton {
+extension UIButton {
     func onTap(_ action: @escaping () -> Void) {
         let wrapper = ClosureWrapper(action)
         objc_setAssociatedObject(self, &AssociatedKeys.tapAction, wrapper, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
