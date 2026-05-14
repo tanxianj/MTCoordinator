@@ -89,6 +89,11 @@ class HomeViewController: BaseModuleViewController {
             self?.present(alert, animated: true)
         }
 
+        // MARK: - 调试
+        addButton(title: "打印协调器树 🌳", color: .systemGray) { [weak self] in
+            self?.moduleCoordinator?.printCoordinatorTree()
+        }
+
         // MARK: - 退出登录
         addButton(title: "退出登录", color: .systemRed) { [weak self] in
             AppCoordinator.shared?.logout()
