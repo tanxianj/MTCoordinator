@@ -21,16 +21,15 @@ dependencies: [
 
 打开 `MTCoordinator.xcworkspace`，可同时编辑框架源码和 Example 项目。
 
-## 核心文件
+## 框架源码（Sources/MTCoordinator/）
 
 | 文件 | 职责 |
 |------|------|
 | `CoordinatorProtocol.swift` | Module、Coordinator 协议、NavigationFlowCoordinator、ModalFlowCoordinator、BackStrategy |
-| `ModuleCoordinator.swift` | 核心导航逻辑、MulticastDelegate（线程安全）、InterceptorChain、数据回传 |
-| `TransitionStyle.swift` | 转场动画（Fade/SlideUp/CrossDissolve + Pop 反向动画） |
+| `ModuleCoordinator.swift` | 核心导航逻辑、MulticastDelegate（线程安全）、数据回传、子协调器自动清理 |
+| `TransitionStyle.swift` | 转场动画（Fade/SlideUp/CrossDissolve + Pop 反向动画）、TransitionDelegate |
 | `NavigationInterceptor.swift` | 导航拦截器协议 + InterceptorChain |
 | `BaseModuleViewController.swift` | VC 基类，提供 navigateTo/backTo/present/dismiss 等便捷方法 |
-| `UIButton+Closure.swift` | UIButton 闭包扩展，兼容 iOS 12+ |
 
 ## 快速开始
 
@@ -171,21 +170,24 @@ Push 和 Pop 都有对应动画：
 
 ```
 MTCoordinator/
-├── MTCoordinator.xcworkspace      ← 打开这个（同时包含框架和 Example）
-├── Package.swift                   ← SPM 包定义
+├── MTCoordinator.xcworkspace       ← 打开这个（同时包含框架和 Example）
+├── Package.swift                    ← SPM 包定义
 ├── Sources/
-│   └── MTCoordinator/             ← 框架源码
+│   └── MTCoordinator/              ← 框架源码
 │       ├── CoordinatorProtocol.swift
 │       ├── ModuleCoordinator.swift
 │       ├── TransitionStyle.swift
 │       ├── NavigationInterceptor.swift
-│       ├── BaseModuleViewController.swift
-│       └── UIButton+Closure.swift
+│       └── BaseModuleViewController.swift
 ├── Example/
-│   └── Example/                   ← 示例项目
-│       ├── AppCoordinator.swift
-│       ├── HomeViewController.swift
-│       └── ProfileViewController.swift
+│   ├── Package.swift               ← 让 Xcode 不在 Package 视图中显示此目录
+│   ├── Example.xcodeproj
+│   └── Example/
+│       ├── APP/                    ← AppDelegate + SceneDelegate
+│       ├── Coordinator/            ← AppCoordinator + AuthCoordinator
+│       ├── Delegates/              ← 埋点/性能/历史/拦截器示例
+│       ├── Extension/              ← UIButton+Closure（iOS 12 兼容）
+│       └── VCModule/               ← 页面模块（Home/Login/Profile）
 └── README.md
 ```
 
