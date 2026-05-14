@@ -166,6 +166,136 @@ Push 和 Pop 都有对应动画：
 | `.crossDissolve` | 交叉溶解 | 交叉溶解 |
 | `.custom(push, pop)` | 自定义 | 自定义 |
 
+## 登录 + TabBar 架构
+
+### 场景一：登录后切换到 TabBar 页面
+
+```swift
+import MTCoordinator
+
+class AppCoordinator: NSObject, Coordinator {
+    var childCoordinators: [Coordinator] = []
+    var navigationController: UINavigationController
+    weak var parentCoordinator: Coordinator?
+
+    private(set) var tabCoordinators: [ModuleCoordinator] = []
+    private(set) var tabBarController: UITabBarController?
+    private var isLoggedIn = false
+
+    func start() {
+        if isLoggedIn { showMainFlow() }
+        else { showAuthFlow() }
+    }
+
+    // 登录流程
+    private func showAuthFlow() {
+        let auth = AuthCoordinator(navigationController: navigationController)
+        auth.delegate = self
+        addChild(auth)
+        auth.start()
+    }
+
+    // 登录成功后切换到 TabBar
+    private func showMainFlow() {
+        if let auth = findChild(ofType: AuthCoordinator.self) {
+            removeChild(auth)
+        }
+
+        let factory = DefaultModuleFactory()
+
+        // Tab 1: 首页
+        let homeNav = UINavigationController()
+        homeNav.tabBarItem = UITabBarItem(title: "首页", image: nil, tag: 0)
+        let homeCoordinator = ModuleCoordinator(navigationController: homeNav, moduleFactory: factory)
+        homeCoordinator.delegates.add(self)
+        addChild(homeCoordinator)
+        homeCoordinator.navigateTo(.home, animated: false)
+
+        // Tab 2: 我的
+        let profileNav = UINavigationController()
+        profileNav.tabBarItem = UITabBarItem(title: "我的", image: nil, tag: 1)
+        let profileCoordinator = ModuleCoordinator(navigationController: profileNav, moduleFactory: factory)
+        profileCoordinator.delegates.add(self)
+        addChild(profileCoordinator)
+        profileCoordinator.navigateTo(.profile, animated: false)
+
+        tabCoordinators = [homeCoordinator, profileCoordinator]
+
+        let tabBar = UITabBarController()
+        tabBar.viewControllers = [homeNav, profileNav]
+        self.tabBarController = tabBar
+
+        navigationController.setNavigationBarHidden(true, animated: false)
+        navigationController.setViewControllers([tabBar], animated: true)
+    }
+
+    // 退出登录
+    func logout() {
+        isLoggedIn = false
+        tabCoordinators = []
+        tabBarController = nil
+        removeAllChildren()
+        navigationController.setNavigationBarHidden(false, animated: false)
+        showAuthFlow()
+    }
+}
+
+// AuthCoordinator 完成后回调
+extension AppCoordinator: AuthCoordinatorDelegate {
+    func authCoordinatorDidFinish(_ coordinator: AuthCoordinator) {
+        isLoggedIn = true
+        showMainFlow()
+    }
+}
+```
+
+### 场景二：直接显示 TabBar（无登录流程）
+
+```swift
+import MTCoordinator
+
+class AppCoordinator: NSObject, Coordinator {
+    var childCoordinators: [Coordinator] = []
+    var navigationController: UINavigationController
+    weak var parentCoordinator: Coordinator?
+
+    private(set) var tabCoordinators: [ModuleCoordinator] = []
+    private(set) var tabBarController: UITabBarController?
+
+    func start() {
+        let factory = DefaultModuleFactory()
+
+        // Tab 1: 首页
+        let homeNav = UINavigationController()
+        homeNav.tabBarItem = UITabBarItem(title: "首页", image: nil, tag: 0)
+        let homeCoordinator = ModuleCoordinator(navigationController: homeNav, moduleFactory: factory)
+        addChild(homeCoordinator)
+        homeCoordinator.navigateTo(.home, animated: false)
+
+        // Tab 2: 我的
+        let profileNav = UINavigationController()
+        profileNav.tabBarItem = UITabBarItem(title: "我的", image: nil, tag: 1)
+        let profileCoordinator = ModuleCoordinator(navigationController: profileNav, moduleFactory: factory)
+        addChild(profileCoordinator)
+        profileCoordinator.navigateTo(.profile, animated: false)
+
+        tabCoordinators = [homeCoordinator, profileCoordinator]
+
+        let tabBar = UITabBarController()
+        tabBar.viewControllers = [homeNav, profileNav]
+        self.tabBarController = tabBar
+
+        navigationController.setNavigationBarHidden(true, animated: false)
+        navigationController.setViewControllers([tabBar], animated: false)
+    }
+}
+```
+
+> **关键点**：每个 Tab 有独立的 `UINavigationController` + `ModuleCoordinator`，导航互不干扰。
+> push 时自动隐藏 TabBar（`hidesBottomBarWhenPushed = true`）。
+
+---
+
 ## 项目结构
 
 ```
