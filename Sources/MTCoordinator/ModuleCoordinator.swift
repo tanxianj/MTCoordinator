@@ -173,6 +173,8 @@ open class ModuleCoordinator: NSObject, Coordinator {
         if wrapInNav {
             let nav = UINavigationController(rootViewController: vc)
             nav.modalPresentationStyle = style
+            // 将当前 coordinator 绑定到模态的 nav 上，这样模态内的 VC 也能获取到 moduleCoordinator
+            nav.associatedModuleCoordinator = self
             presented = nav
         } else {
             vc.modalPresentationStyle = style
